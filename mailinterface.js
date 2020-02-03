@@ -9,9 +9,14 @@ class MailInterface extends EventEmitter {
 	constructor(opts) {
 		super();
 		Object.assign(this, opts);
+		this.mbox = this.mbox || `/var/mail/${require('os').getUser().username}`;
+		this.smtp.host = this.smtp.host || "localhost";
+		this.smtp.port = this.smtp.port || 25;
+		this.smtp.hostname = this.smtp.hostname || this.host;
+		this.smtp.from = this.smtp.from || `${require('os').getUser().username}@${this.hostname}`;
+		this.target = this.target;
 		fs.watch(this.mbox, eventType => {
-			if (eventType != "change") return;
-			this.check();
+			if (eventType == "change") this.check();
 		});
 	}
 	
@@ -37,7 +42,7 @@ class MailInterface extends EventEmitter {
 		console.log("sending mail:", body);
 		var smtpClient = new SMTPClient(this.smtp);
 		await smtpClient.connect();
-		await smtpClient.greet({hostname: this.smtp.ehlo});
+		await smtpClient.greet({hostname: this.smtp.hostname});
 		await smtpClient.mail({from: this.smtp.from});
 		await smtpClient.rcpt({to: this.target});
 		var msg = '\r\n' + body.replace(/\n/g, '\r\n') + '\r\n';

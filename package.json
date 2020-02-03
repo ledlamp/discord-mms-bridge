@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@rocket.chat/sdk": "^0.2.9-2",
+    "discord.js": "^11.5.1",
     "dotenv": "^8.1.0",
     "mail": "^0.2.3",
     "mailparser": "^2.7.1",
