@@ -2,7 +2,7 @@ var {EventEmitter} = require("events");
 var fs = require("fs");
 var Mbox = require("node-mbox");
 var {simpleParser} = require("mailparser");
-var {SMTPClient} = require("smtp-client");
+var nodemailer = require("nodemailer");
 
 class MailInterface extends EventEmitter {
 	
@@ -10,14 +10,14 @@ class MailInterface extends EventEmitter {
 		super();
 		Object.assign(this, opts);
 		this.mbox = this.mbox || `/var/mail/${require('os').getUser().username}`;
-		this.smtp.host = this.smtp.host || "localhost";
-		this.smtp.port = this.smtp.port || 25;
-		this.smtp.hostname = this.smtp.hostname || this.host;
-		this.smtp.from = this.smtp.from || `${require('os').getUser().username}@${this.hostname}`;
-		this.target = this.target;
 		fs.watch(this.mbox, eventType => {
 			if (eventType == "change") this.check();
 		});
+		this.transporter = nodemailer.createTransport(this.nodemailer.options, this.nodemailer.defaults);
+		this.transporter.verify((error, success) => {
+			error ? console.error(error) : console.log("SMTP connection verified", success);
+		});
+		this.send = this.transporter.sendMail;
 	}
 	
 	check() {
@@ -38,30 +38,32 @@ class MailInterface extends EventEmitter {
 		});
 	}
 	
-	async send(body) {
-		console.log("sending mail:", body);
-		var smtpClient = new SMTPClient(this.smtp);
-		await smtpClient.connect();
-		await smtpClient.greet({hostname: this.smtp.hostname});
-		await smtpClient.mail({from: this.smtp.from});
-		await smtpClient.rcpt({to: this.target});
-		var msg = '\r\n' + body.replace(/\n/g, '\r\n') + '\r\n';
-		/*var msg = 'MIME-Version: 1.0\r\n' +
-			'Content-Type: multipart/alternative; boundary="asdfhuiadfghviuarevhilu"\r\n' +
-			"\r\n" +
-			"--asdfhuiadfghviuarevhilu\r\n" +
-			'Content-Type: text/plain; charset="UTF-8"\r\n' +
-			'\r\n' + body.replace(/\n/g, '\r\n') + '\r\n' +
-			'\r\n' +
-			"--asdfhuiadfghviuarevhilu\r\n" +
-			'Content-Type: text/html; charset="UTF-8"\r\n' +
-			'\r\n<div dir="ltr">' + body.replace(/\n/g, '\r\n') + '</div>\r\n' +
-			'\r\n' +
-			'--asdfhuiadfghviuarevhilu--\r\n';*/
-		await smtpClient.data(msg);
-		await smtpClient.quit();
-		console.log("finished sending mail");
-	}
+	//async send(body) {
+		// var smtpClient = new SMTPClient(this.smtp);
+		// await smtpClient.connect();
+		// await smtpClient.greet({hostname: this.smtp.hostname});
+		// await smtpClient.mail({from: this.smtp.from});
+		// await smtpClient.rcpt({to: this.target});
+		// var msg = '\r\n' + body.replace(/\n/g, '\r\n') + '\r\n';
+		// /*var msg = 'MIME-Version: 1.0\r\n' +
+			// 'Content-Type: multipart/alternative; boundary="asdfhuiadfghviuarevhilu"\r\n' +
+			// "\r\n" +
+			// "--asdfhuiadfghviuarevhilu\r\n" +
+			// 'Content-Type: text/plain; charset="UTF-8"\r\n' +
+			// '\r\n' + body.replace(/\n/g, '\r\n') + '\r\n' +
+			// '\r\n' +
+			// "--asdfhuiadfghviuarevhilu\r\n" +
+			// 'Content-Type: text/html; charset="UTF-8"\r\n' +
+			// '\r\n<div dir="ltr">' + body.replace(/\n/g, '\r\n') + '</div>\r\n' +
+			// '\r\n' +
+			// '--asdfhuiadfghviuarevhilu--\r\n';*/
+		// await smtpClient.data(msg);
+		// await smtpClient.quit();
+		
+		//await transporter.sendMail({text});//WIP
+		// how bout just use the method directly
+		
+	//}
 	
 }
 
